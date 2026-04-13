@@ -11,24 +11,49 @@ const patientRoutes = require('./routes/patientRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const { isLoggedIn } = require('./middleware/authMiddleware');
+const { generalLimiter } = require('./middleware/rateLimiter');
+const { mongoSanitize } = require('./middleware/sanitize');
 
 const app = express();
 
 connectDB();
 
-app.use(helmet());
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false
+}));
+
+// General rate limiter
+app.use(generalLimiter);
+
+// Logging
 app.use(morgan('dev'));
+
+// Body parsing
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+
+// NoSQL injection prevention
+app.use(mongoSanitize);
+
+// Static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+// EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Secure session
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, secure: false, maxAge: 3600000 }
+  cookie: {
+    httpOnly: true,
+    secure: false,
+    maxAge: 1000 * 60 * 60,
+    sameSite: 'strict'
+  }
 }));
 
 app.use((req, res, next) => {
@@ -36,6 +61,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// Routes
 app.use('/auth', authRoutes);
 app.use('/admin/patients', patientRoutes);
 app.use('/patient', patientRoutes);
@@ -52,8 +78,15 @@ app.get('/dashboard', isLoggedIn, (req, res) => {
   res.render('dashboard');
 });
 
+// Custom 404 - never expose stack traces
 app.use((req, res) => {
   res.status(404).render('error', { message: 'Page not found' });
+});
+
+// Custom 500 - never expose stack traces
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).render('error', { message: 'Something went wrong. Please try again.' });
 });
 
 const PORT = process.env.PORT || 3000;
