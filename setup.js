@@ -1,82 +1,64 @@
 const fs = require('fs');
 
-const patientController = `const Patient = require('../models/Patient');
-const User = require('../models/User');
+const appCode = `const express = require('express');
+const session = require('express-session');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const path = require('path');
+require('dotenv').config();
 
-exports.getAllPatients = async (req, res) => {
-  try {
-    const patients = await Patient.find().populate('assignedDoctor', 'name email');
-    res.render('admin/patients', { patients });
-  } catch (error) {
-    res.render('error', { message: error.message });
-  }
-};
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
+const patientRoutes = require('./routes/patientRoutes');
+const doctorRoutes = require('./routes/doctorRoutes');
+const { isLoggedIn } = require('./middleware/authMiddleware');
 
-exports.getCreatePatient = async (req, res) => {
-  try {
-    const doctors = await User.find({ role: 'doctor' });
-    res.render('admin/createPatient', { doctors, error: null });
-  } catch (error) {
-    res.render('error', { message: error.message });
-  }
-};
+const app = express();
 
-exports.postCreatePatient = async (req, res) => {
-  try {
-    const { name, email, phone, dateOfBirth, gender, address, medicalHistory, assignedDoctor } = req.body;
-    const patientData = { name, email, phone, dateOfBirth, gender, address, medicalHistory };
-    if (assignedDoctor && assignedDoctor !== '') {
-      patientData.assignedDoctor = assignedDoctor;
-    }
-    await Patient.create(patientData);
-    res.redirect('/admin/patients');
-  } catch (error) {
-    const doctors = await User.find({ role: 'doctor' });
-    res.render('admin/createPatient', { doctors, error: error.message });
-  }
-};
+connectDB();
 
-exports.getEditPatient = async (req, res) => {
-  try {
-    const patient = await Patient.findById(req.params.id);
-    const doctors = await User.find({ role: 'doctor' });
-    res.render('admin/editPatient', { patient, doctors, error: null });
-  } catch (error) {
-    res.render('error', { message: error.message });
-  }
-};
+app.use(helmet());
+app.use(morgan('dev'));
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-exports.postEditPatient = async (req, res) => {
-  try {
-    const { name, email, phone, dateOfBirth, gender, address, medicalHistory, assignedDoctor } = req.body;
-    const patientData = { name, email, phone, dateOfBirth, gender, address, medicalHistory };
-    if (assignedDoctor && assignedDoctor !== '') {
-      patientData.assignedDoctor = assignedDoctor;
-    }
-    await Patient.findByIdAndUpdate(req.params.id, patientData);
-    res.redirect('/admin/patients');
-  } catch (error) {
-    res.render('error', { message: error.message });
-  }
-};
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, secure: false, maxAge: 3600000 }
+}));
 
-exports.deletePatient = async (req, res) => {
-  try {
-    await Patient.findByIdAndDelete(req.params.id);
-    res.redirect('/admin/patients');
-  } catch (error) {
-    res.render('error', { message: error.message });
-  }
-};
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
+  next();
+});
 
-exports.getMyRecord = async (req, res) => {
-  try {
-    const patient = await Patient.findOne({ email: req.session.user.email }).populate('assignedDoctor', 'name email');
-    res.render('patient/myRecord', { patient });
-  } catch (error) {
-    res.render('error', { message: error.message });
-  }
-};`;
+app.use('/auth', authRoutes);
+app.use('/admin/patients', patientRoutes);
+app.use('/patient', patientRoutes);
+app.use('/doctor', doctorRoutes);
 
-fs.writeFileSync('controllers/patientController.js', patientController);
-console.log('patientController.js done!');
+app.get('/', (req, res) => {
+  if (req.session.user) return res.redirect('/dashboard');
+  res.redirect('/auth/login');
+});
+
+app.get('/dashboard', isLoggedIn, (req, res) => {
+  res.render('dashboard');
+});
+
+app.use((req, res) => {
+  res.status(404).render('error', { message: 'Page not found' });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('Server running on http://localhost:' + PORT);
+});`;
+
+fs.writeFileSync('app.js', appCode);
+console.log('app.js done!');
