@@ -1,0 +1,46 @@
+<%- include('partials/header') %>
+
+<h2 style="margin-bottom:20px;">Welcome, <%= user.name %>! 👋</h2>
+
+<p style="margin-bottom:20px;">You are logged in as: <strong><%= user.role %></strong></p>
+
+<% if (user.role === 'admin') { %>
+  <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:20px;">
+    <div style="background:#2c3e50; color:white; padding:20px; border-radius:8px; text-align:center;">
+      <h3>Manage Doctors</h3>
+      <a href="/admin/doctors" style="color:#fff; text-decoration:underline;">View All</a>
+    </div>
+    <div style="background:#27ae60; color:white; padding:20px; border-radius:8px; text-align:center;">
+      <h3>Manage Patients</h3>
+      <a href="/admin/patients" style="color:#fff; text-decoration:underline;">View All</a>
+    </div>
+    <div style="background:#e74c3c; color:white; padding:20px; border-radius:8px; text-align:center;">
+      <h3>Appointments</h3>
+      <a href="/admin/appointments" style="color:#fff; text-decoration:underline;">View All</a>
+    </div>
+  </div>
+<% } else if (user.role === 'doctor') { %>
+  <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:20px;">
+    <div style="background:#2c3e50; color:white; padding:20px; border-radius:8px; text-align:center;">
+      <h3>My Patients</h3>
+      <a href="/doctor/patients" style="color:#fff; text-decoration:underline;">View All</a>
+    </div>
+    <div style="background:#27ae60; color:white; padding:20px; border-radius:8px; text-align:center;">
+      <h3>My Appointments</h3>
+      <a href="/doctor/appointments" style="color:#fff; text-decoration:underline;">View All</a>
+    </div>
+  </div>
+<% } else { %>
+  <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:20px;">
+    <div style="background:#2c3e50; color:white; padding:20px; border-radius:8px; text-align:center;">
+      <h3>My Appointments</h3>
+      <a href="/patient/appointments" style="color:#fff; text-decoration:underline;">View All</a>
+    </div>
+    <div style="background:#27ae60; color:white; padding:20px; border-radius:8px; text-align:center;">
+      <h3>My Medical Records</h3>
+      <a href="/patient/records" style="color:#fff; text-decoration:underline;">View All</a>
+    </div>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>

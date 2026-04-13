@@ -6,6 +6,7 @@ const path = require('path');
 require('dotenv').config();
 
 const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -31,10 +32,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Routes
+app.use('/auth', authRoutes);
+
+// Home route
 app.get('/', (req, res) => {
-  res.send('MediCare Hospital System is running!');
+  if (req.session.user) {
+    return res.redirect('/dashboard');
+  }
+  res.redirect('/auth/login');
 });
 
+// Dashboard route
+app.get('/dashboard', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth/login');
+  }
+  res.render('dashboard');
+});
+
+// 404 handler
 app.use((req, res) => {
   res.status(404).send('Page not found');
 });

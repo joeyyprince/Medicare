@@ -1,6 +1,4 @@
-const fs = require('fs');
-
-const userCode = `const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
@@ -20,7 +18,4 @@ UserSchema.methods.comparePassword = async function(candidate) {
   return await bcrypt.compare(candidate, this.password);
 };
 
-module.exports = mongoose.model('User', UserSchema);`;
-
-fs.writeFileSync('models/User.js', userCode);
-console.log('User.js done!');
+module.exports = mongoose.model('User', UserSchema);
