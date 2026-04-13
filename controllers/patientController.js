@@ -1,6 +1,4 @@
-const fs = require('fs');
-
-const patientController = `const Patient = require('../models/Patient');
+const Patient = require('../models/Patient');
 const User = require('../models/User');
 
 exports.getAllPatients = async (req, res) => {
@@ -76,7 +74,4 @@ exports.getMyRecord = async (req, res) => {
   } catch (error) {
     res.render('error', { message: error.message });
   }
-};`;
-
-fs.writeFileSync('controllers/patientController.js', patientController);
-console.log('patientController.js done!');
+};

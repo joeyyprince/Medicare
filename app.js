@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const patientRoutes = require('./routes/patientRoutes');
 const { isLoggedIn } = require('./middleware/authMiddleware');
 
 const app = express();
@@ -34,6 +35,8 @@ app.use((req, res, next) => {
 });
 
 app.use('/auth', authRoutes);
+app.use('/admin/patients', patientRoutes);
+app.use('/patient/records', patientRoutes);
 
 app.get('/', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');

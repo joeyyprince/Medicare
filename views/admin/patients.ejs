@@ -1,0 +1,31 @@
+<%- include('../partials/header') %>
+<h2 style="margin-bottom:20px;">All Patients</h2>
+<a href="/admin/patients/create" class="btn" style="margin-bottom:20px; display:inline-block;">+ Add New Patient</a>
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr style="background:#2c3e50; color:white;">
+      <th style="padding:10px; text-align:left;">Name</th>
+      <th style="padding:10px; text-align:left;">Email</th>
+      <th style="padding:10px; text-align:left;">Phone</th>
+      <th style="padding:10px; text-align:left;">Doctor</th>
+      <th style="padding:10px; text-align:left;">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% patients.forEach(patient => { %>
+    <tr style="border-bottom:1px solid #ddd;">
+      <td style="padding:10px;"><%= patient.name %></td>
+      <td style="padding:10px;"><%= patient.email %></td>
+      <td style="padding:10px;"><%= patient.phone || 'N/A' %></td>
+      <td style="padding:10px;"><%= patient.assignedDoctor ? patient.assignedDoctor.name : 'Not assigned' %></td>
+      <td style="padding:10px;">
+        <a href="/admin/patients/edit/<%= patient._id %>" style="background:#27ae60; color:white; padding:5px 10px; border-radius:4px; text-decoration:none;">Edit</a>
+        <form method="POST" action="/admin/patients/delete/<%= patient._id %>" style="display:inline;">
+          <button type="submit" style="background:#e74c3c; color:white; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;" onclick="return confirm('Are you sure?')">Delete</button>
+        </form>
+      </td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+<%- include('../partials/footer') %>
