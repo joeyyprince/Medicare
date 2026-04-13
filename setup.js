@@ -1,117 +1,92 @@
 const fs = require('fs');
 
-const authRoutes = `const express = require('express');
-const router = express.Router();
-const authController = require('../controllers/authController');
-const { loginLimiter } = require('../middleware/rateLimiter');
-const { registerValidation, loginValidation, validateRequest } = require('../middleware/validation');
-
-router.get('/register', authController.getRegister);
-router.post('/register', registerValidation, validateRequest, authController.postRegister);
-router.get('/login', authController.getLogin);
-router.post('/login', loginLimiter, loginValidation, validateRequest, authController.postLogin);
-router.get('/logout', authController.logout);
-
-module.exports = router;`;
-
-fs.writeFileSync('routes/authRoutes.js', authRoutes);
-console.log('authRoutes.js done!');
-
-const appCode = `const express = require('express');
-const session = require('express-session');
-const helmet = require('helmet');
-const morgan = require('morgan');
+const logger = `const winston = require('winston');
 const path = require('path');
-require('dotenv').config();
 
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/authRoutes');
-const patientRoutes = require('./routes/patientRoutes');
-const doctorRoutes = require('./routes/doctorRoutes');
-const appointmentRoutes = require('./routes/appointmentRoutes');
-const { isLoggedIn } = require('./middleware/authMiddleware');
-const { generalLimiter } = require('./middleware/rateLimiter');
-const { mongoSanitize } = require('./middleware/sanitize');
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({
+      filename: path.join(__dirname, '../logs/error.log'),
+      level: 'error'
+    }),
+    new winston.transports.File({
+      filename: path.join(__dirname, '../logs/combined.log')
+    }),
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    })
+  ]
+});
 
-const app = express();
+module.exports = logger;`;
 
-connectDB();
+fs.writeFileSync('config/logger.js', logger);
+console.log('logger.js done!');
 
-// Security headers
-app.use(helmet({
-  contentSecurityPolicy: false
-}));
+const authController = `const User = require('../models/User');
+const logger = require('../config/logger');
 
-// General rate limiter
-app.use(generalLimiter);
+exports.getRegister = (req, res) => {
+  res.render('auth/register', { error: null });
+};
 
-// Logging
-app.use(morgan('dev'));
-
-// Body parsing
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-
-// NoSQL injection prevention
-app.use(mongoSanitize);
-
-// Static files
-app.use(express.static(path.join(__dirname, 'public')));
-
-// EJS
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
-// Secure session
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: false,
-    maxAge: 1000 * 60 * 60,
-    sameSite: 'strict'
+exports.postRegister = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      logger.warn('Registration attempt with existing email: ' + email);
+      return res.render('auth/register', { error: 'Email already registered' });
+    }
+    const user = await User.create({ name, email, password, role });
+    logger.info('New user registered: ' + email + ' role: ' + role);
+    req.session.user = { id: user._id, name: user.name, role: user.role };
+    res.redirect('/dashboard');
+  } catch (error) {
+    logger.error('Registration error: ' + error.message);
+    res.render('auth/register', { error: error.message });
   }
-}));
+};
 
-app.use((req, res, next) => {
-  res.locals.user = req.session.user || null;
-  next();
-});
+exports.getLogin = (req, res) => {
+  res.render('auth/login', { error: null });
+};
 
-// Routes
-app.use('/auth', authRoutes);
-app.use('/admin/patients', patientRoutes);
-app.use('/patient', patientRoutes);
-app.use('/doctor', doctorRoutes);
-app.use('/appointments', appointmentRoutes);
-app.use('/admin/appointments', appointmentRoutes);
+exports.postLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      logger.warn('Failed login attempt for email: ' + email + ' IP: ' + req.ip);
+      return res.render('auth/login', { error: 'Invalid email or password' });
+    }
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      logger.warn('Failed login attempt for email: ' + email + ' IP: ' + req.ip);
+      return res.render('auth/login', { error: 'Invalid email or password' });
+    }
+    logger.info('Successful login: ' + email + ' IP: ' + req.ip);
+    req.session.user = { id: user._id, name: user.name, role: user.role };
+    res.redirect('/dashboard');
+  } catch (error) {
+    logger.error('Login error: ' + error.message);
+    res.render('auth/login', { error: error.message });
+  }
+};
 
-app.get('/', (req, res) => {
-  if (req.session.user) return res.redirect('/dashboard');
+exports.logout = (req, res) => {
+  logger.info('User logged out: ' + (req.session.user ? req.session.user.email : 'unknown'));
+  req.session.destroy();
   res.redirect('/auth/login');
-});
+};`;
 
-app.get('/dashboard', isLoggedIn, (req, res) => {
-  res.render('dashboard');
-});
-
-// Custom 404 - never expose stack traces
-app.use((req, res) => {
-  res.status(404).render('error', { message: 'Page not found' });
-});
-
-// Custom 500 - never expose stack traces
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).render('error', { message: 'Something went wrong. Please try again.' });
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log('Server running on http://localhost:' + PORT);
-});`;
-
-fs.writeFileSync('app.js', appCode);
-console.log('app.js done!');
+fs.writeFileSync('controllers/authController.js', authController);
+console.log('authController.js done!');
