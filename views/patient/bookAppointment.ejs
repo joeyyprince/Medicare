@@ -1,0 +1,20 @@
+<%- include('../partials/header') %>
+<h2 style="margin-bottom:20px;">Book an Appointment</h2>
+<% if (error) { %><p class="error"><%= error %></p><% } %>
+<form method="POST" action="/appointments/book">
+  <label>Select Doctor</label>
+  <select name="doctor" required>
+    <option value="">-- Select Doctor --</option>
+    <% doctors.forEach(doctor => { %>
+    <option value="<%= doctor._id %>"><%= doctor.name %></option>
+    <% }) %>
+  </select>
+  <label>Date</label>
+  <input type="date" name="date" required>
+  <label>Time</label>
+  <input type="time" name="time" required>
+  <label>Reason for Visit</label>
+  <textarea name="reason" rows="4" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;" placeholder="Describe your reason for visit"></textarea>
+  <button type="submit" class="btn" style="margin-top:10px;">Book Appointment</button>
+</form>
+<%- include('../partials/footer') %>

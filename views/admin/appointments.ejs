@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+<h2 style="margin-bottom:20px;">All Appointments</h2>
+<% if (appointments.length === 0) { %>
+  <p>No appointments found.</p>
+<% } else { %>
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr style="background:#2c3e50; color:white;">
+      <th style="padding:10px; text-align:left;">Patient</th>
+      <th style="padding:10px; text-align:left;">Doctor</th>
+      <th style="padding:10px; text-align:left;">Date</th>
+      <th style="padding:10px; text-align:left;">Time</th>
+      <th style="padding:10px; text-align:left;">Status</th>
+      <th style="padding:10px; text-align:left;">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% appointments.forEach(apt => { %>
+    <tr style="border-bottom:1px solid #ddd;">
+      <td style="padding:10px;"><%= apt.patient ? apt.patient.name : 'N/A' %></td>
+      <td style="padding:10px;"><%= apt.doctor ? apt.doctor.name : 'N/A' %></td>
+      <td style="padding:10px;"><%= apt.date.toDateString() %></td>
+      <td style="padding:10px;"><%= apt.time %></td>
+      <td style="padding:10px;">
+        <span style="background:<%= apt.status === 'confirmed' ? '#27ae60' : apt.status === 'cancelled' ? '#e74c3c' : '#f39c12' %>; color:white; padding:3px 8px; border-radius:4px;"><%= apt.status %></span>
+      </td>
+      <td style="padding:10px;">
+        <form method="POST" action="/appointments/admin/<%= apt._id %>/status" style="display:inline;">
+          <select name="status" style="padding:5px; border-radius:4px;">
+            <option value="pending" <%= apt.status === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="confirmed" <%= apt.status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+            <option value="cancelled" <%= apt.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+          </select>
+          <button type="submit" style="background:#2c3e50; color:white; padding:5px 10px; border:none; border-radius:4px; cursor:pointer;">Update</button>
+        </form>
+      </td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+<% } %>
+<%- include('../partials/footer') %>

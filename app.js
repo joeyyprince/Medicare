@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const patientRoutes = require('./routes/patientRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
 const { isLoggedIn } = require('./middleware/authMiddleware');
 
 const app = express();
@@ -39,6 +40,8 @@ app.use('/auth', authRoutes);
 app.use('/admin/patients', patientRoutes);
 app.use('/patient', patientRoutes);
 app.use('/doctor', doctorRoutes);
+app.use('/appointments', appointmentRoutes);
+app.use('/admin/appointments', appointmentRoutes);
 
 app.get('/', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');
