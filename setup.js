@@ -1,26 +1,59 @@
 const fs = require('fs');
 
-const userCode = `const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const appCode = `const express = require('express');
+const session = require('express-session');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const path = require('path');
+require('dotenv').config();
 
-const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'doctor', 'patient'], default: 'patient' },
-  createdAt: { type: Date, default: Date.now }
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
+const { isLoggedIn } = require('./middleware/authMiddleware');
+
+const app = express();
+
+connectDB();
+
+app.use(helmet());
+app.use(morgan('dev'));
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, secure: false, maxAge: 3600000 }
+}));
+
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
+  next();
 });
 
-UserSchema.pre('save', async function() {
-  if (!this.isModified('password')) return;
-  this.password = await bcrypt.hash(this.password, 12);
+app.use('/auth', authRoutes);
+
+app.get('/', (req, res) => {
+  if (req.session.user) return res.redirect('/dashboard');
+  res.redirect('/auth/login');
 });
 
-UserSchema.methods.comparePassword = async function(candidate) {
-  return await bcrypt.compare(candidate, this.password);
-};
+app.get('/dashboard', isLoggedIn, (req, res) => {
+  res.render('dashboard');
+});
 
-module.exports = mongoose.model('User', UserSchema);`;
+app.use((req, res) => {
+  res.status(404).render('error', { message: 'Page not found' });
+});
 
-fs.writeFileSync('models/User.js', userCode);
-console.log('User.js done!');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('Server running on http://localhost:' + PORT);
+});`;
+
+fs.writeFileSync('app.js', appCode);
+console.log('app.js done!');
