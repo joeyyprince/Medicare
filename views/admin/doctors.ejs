@@ -1,0 +1,22 @@
+<%- include('../partials/header') %>
+<h2 style="margin-bottom:20px;">Manage Doctors</h2>
+<table style="width:100%; border-collapse:collapse;">
+<thead>
+<tr style="background:#2c3e50; color:white;">
+<th style="padding:10px; text-align:left;">Name</th>
+<th style="padding:10px; text-align:left;">Email</th>
+</tr>
+</thead>
+<tbody>
+<% doctors.forEach(doctor => { %>
+<tr style="border-bottom:1px solid #ddd;">
+<td style="padding:10px;"><%= doctor.name %></td>
+<td style="padding:10px;"><%= doctor.email %></td>
+</tr>
+<% }) %>
+</tbody>
+</table>
+<% if (doctors.length === 0) { %>
+<p>No doctors registered yet.</p>
+<% } %>
+<%- include('../partials/footer') %>

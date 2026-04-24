@@ -13,7 +13,7 @@ exports.getAllPatients = async (req, res) => {
 exports.getCreatePatient = async (req, res) => {
   try {
     const doctors = await User.find({ role: 'doctor' });
-    res.render('admin/createPatient', { doctors, error: null });
+    res.render('admin/createPatient', { doctors, error: null, csrfToken: req.csrfToken ? req.csrfToken() : '' });
   } catch (error) {
     res.render('error', { message: error.message });
   }
@@ -30,7 +30,7 @@ exports.postCreatePatient = async (req, res) => {
     res.redirect('/admin/patients');
   } catch (error) {
     const doctors = await User.find({ role: 'doctor' });
-    res.render('admin/createPatient', { doctors, error: error.message });
+    res.render('admin/createPatient', { doctors, error: error.message, csrfToken: req.csrfToken ? req.csrfToken() : '' });
   }
 };
 
@@ -38,7 +38,7 @@ exports.getEditPatient = async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id);
     const doctors = await User.find({ role: 'doctor' });
-    res.render('admin/editPatient', { patient, doctors, error: null });
+    res.render('admin/editPatient', { patient, doctors, error: null, csrfToken: req.csrfToken ? req.csrfToken() : '' }); 
   } catch (error) {
     res.render('error', { message: error.message });
   }
@@ -71,6 +71,15 @@ exports.getMyRecord = async (req, res) => {
   try {
     const patient = await Patient.findOne({ email: req.session.user.email }).populate('assignedDoctor', 'name email');
     res.render('patient/myRecord', { patient });
+  } catch (error) {
+    res.render('error', { message: error.message });
+  }
+};
+
+exports.getAllDoctors = async (req, res) => {
+  try {
+    const doctors = await User.find({ role: 'doctor' });
+    res.render('admin/doctors', { doctors });
   } catch (error) {
     res.render('error', { message: error.message });
   }

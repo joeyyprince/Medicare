@@ -5,7 +5,7 @@ const User = require('../models/User');
 exports.getBookAppointment = async (req, res) => {
   try {
     const doctors = await User.find({ role: 'doctor' });
-    res.render('patient/bookAppointment', { doctors, error: null });
+    res.render('patient/bookAppointment', { doctors, error: null, csrfToken: req.csrfToken ? req.csrfToken() : '' });
   } catch (error) {
     res.render('error', { message: error.message });
   }
@@ -22,10 +22,10 @@ exports.postBookAppointment = async (req, res) => {
       time,
       reason
     });
-    res.redirect('/patient/appointments');
+    res.redirect('/appointments/my');
   } catch (error) {
     const doctors = await User.find({ role: 'doctor' });
-    res.render('patient/bookAppointment', { doctors, error: error.message });
+    res.render('patient/bookAppointment', { doctors, error: error.message, csrfToken: req.csrfToken ? req.csrfToken() : '' });
   }
 };
 
@@ -44,7 +44,7 @@ exports.getMyAppointments = async (req, res) => {
 exports.cancelAppointment = async (req, res) => {
   try {
     await Appointment.findByIdAndUpdate(req.params.id, { status: 'cancelled' });
-    res.redirect('/patient/appointments');
+    res.redirect('/appointments/my');
   } catch (error) {
     res.render('error', { message: error.message });
   }
@@ -67,7 +67,7 @@ exports.updateAppointmentStatus = async (req, res) => {
   try {
     const { status } = req.body;
     await Appointment.findByIdAndUpdate(req.params.id, { status });
-    res.redirect('/admin/appointments');
+    res.redirect('/admin/appointments/admin');
   } catch (error) {
     res.render('error', { message: error.message });
   }

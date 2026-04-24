@@ -2,11 +2,18 @@
 
 <h2 style="margin-bottom:20px;">Register</h2>
 
-<% if (error) { %>
+<% if (error && error.length > 0) { %>
   <p class="error"><%= error %></p>
 <% } %>
 
+<% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+  <p class="error">
+    <%= errors.map(e => e.msg).join(', ') %>
+  </p>
+<% } %>
+
 <form method="POST" action="/auth/register">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <label>Full Name</label>
   <input type="text" name="name" required placeholder="Enter your full name">
 

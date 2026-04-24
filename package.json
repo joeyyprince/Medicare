@@ -20,6 +20,8 @@
   "homepage": "https://github.com/joeyyprince/medicare#readme",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "csurf": "^1.11.0",
     "dotenv": "^17.4.1",
     "ejs": "^5.0.1",
     "express": "^5.2.1",

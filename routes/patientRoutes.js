@@ -6,6 +6,7 @@ const { isAdmin, isPatient } = require('../middleware/roleMiddleware');
 
 // Admin routes
 router.get('/', isLoggedIn, isAdmin, patientController.getAllPatients);
+router.get('/doctors', isLoggedIn, isAdmin, patientController.getAllDoctors);
 router.get('/create', isLoggedIn, isAdmin, patientController.getCreatePatient);
 router.post('/create', isLoggedIn, isAdmin, patientController.postCreatePatient);
 router.get('/edit/:id', isLoggedIn, isAdmin, patientController.getEditPatient);

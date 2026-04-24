@@ -5,7 +5,7 @@ const registerValidation = [
     .trim()
     .notEmpty().withMessage('Name is required')
     .isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters')
-    .matches(/^[a-zA-Zs]+$/).withMessage('Name can only contain letters and spaces'),
+    .matches(/^[a-zA-Z\s]+$/).withMessage('Name can only contain letters and spaces'),
   body('email')
     .trim()
     .notEmpty().withMessage('Email is required')
@@ -27,11 +27,13 @@ const loginValidation = [
 ];
 
 const validateRequest = (req, res, next) => {
+  console.log('BODY:', req.body);
   const errors = validationResult(req);
+  console.log('ERRORS:', errors.array());
   if (!errors.isEmpty()) {
     const errorMessages = errors.array().map(err => err.msg).join(', ');
     const view = req.path.includes('register') ? 'auth/register' : 'auth/login';
-    return res.render(view, { error: errorMessages });
+    return res.render(view, { csrfToken: req.csrfToken ? req.csrfToken() : '', error: errorMessages, errors: [] });
   }
   next();
 };
